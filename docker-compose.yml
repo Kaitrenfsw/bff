@@ -1,0 +1,15 @@
+version: '3'
+services:
+  bff:
+    build: .
+    command: mix phoenix.server
+    volumes:
+      - .:/app
+    ports:
+      - "4000:4000"
+    networks:
+      - shared
+networks:
+  shared: 
+    external:
+      name: shared
