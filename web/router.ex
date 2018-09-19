@@ -16,5 +16,6 @@ defmodule Bff.Router do
     get "/content", ProcessingController, :content
     post "/user_content", ProcessingController, :topic_user
     post "/login", UserController, :login
+    post "/users", AdminController, :create_account
   end
 end

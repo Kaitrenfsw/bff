@@ -2,7 +2,6 @@ defmodule Bff.UserController do
   use Bff.Web, :controller
 
   def login(conn, %{"email" => email, "password" => password}) do
-    IO.inspect "HOLAAAAA"
     
     header = [
               {"Content-Type", "application/json"}
