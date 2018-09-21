@@ -52,4 +52,57 @@ defmodule Bff.AdminController do
 
   end
 
+  def index(conn, _assign) do
+    [authorization_header | _] = get_req_header(conn, "authorization")
+
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+    case HTTPoison.get("http://user:4000/api/users?action=get_accounts", header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+        conn
+        |> put_status(200)
+        |> render(Bff.AdminView, "same.json", %{data: hash_response})
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+
+  end
+
+  def delete_account(conn, %{"id" => id}) do
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
+
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+    body = %{
+              id: id,
+              action: "delete_account"
+            }
+
+    body_request = Poison.encode!(body)
+    case HTTPoison.delete("http://user:4000/api/users/?id=#{id}&action=delete_account", header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+        conn
+        |> put_status(200)
+        |> render(Bff.AdminView, "same.json", %{data: hash_response})
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+
+  end
+
 end

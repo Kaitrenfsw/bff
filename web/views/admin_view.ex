@@ -11,4 +11,10 @@ defmodule Bff.AdminView do
       }
     }
   end
+
+  def render("same.json", %{data: data}) do
+    data
+  end
+
+
 end

@@ -7,7 +7,8 @@ defmodule Bff.UserView do
       user: %{
       	id: data["id"],
       	email: data["email"],
-      	token: data["access_token"]
+      	token: data["access_token"],
+        user_type: data["user_type"]
       }
     }
   end
