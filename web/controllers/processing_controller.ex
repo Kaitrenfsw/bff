@@ -4,7 +4,7 @@ defmodule Bff.ProcessingController do
   def content(conn, assigns) do
     token = get_req_header(conn, "auth")
     
-    response = HTTPoison.get! "http://procesamiento:8000/topic/"
+    response = HTTPoison.get! "http://processing:8000/topic/"
     body = response.body
     
     conn
@@ -19,7 +19,7 @@ defmodule Bff.ProcessingController do
              ]    
     body = Poison.encode!(%{user_id: 1})
     
-    case HTTPoison.post("http://procesamiento:8000/topicUser/", body, header, []) do
+    case HTTPoison.post("http://processing:8000/topicUser/", body, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
 
         conn
@@ -42,7 +42,7 @@ defmodule Bff.ProcessingController do
 
     body = Poison.encode!(%{})
 
-    case HTTPoison.post("http://procesamiento:8000/ldamodel/", body, header, []) do
+    case HTTPoison.post("http://processing:8000/ldamodel/", body, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
 
         conn
