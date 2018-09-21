@@ -26,7 +26,7 @@ defmodule Bff.AdminController do
 
     IO.inspect user
     body_request = Poison.encode!(user)
-    case HTTPoison.post("http://user:4000/api/sign_up/", body_request, header, []) do
+    case HTTPoison.post("http://user:4000/api/account/", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
         IO.inspect hash_response
@@ -44,7 +44,7 @@ defmodule Bff.AdminController do
 
       {:error, _response} ->
         conn
-        |> put_status(401)
+        |> put_status(500)
         |> render(Bff.ErrorView, "500.json")
 
     end

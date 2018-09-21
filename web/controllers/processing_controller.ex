@@ -18,14 +18,44 @@ defmodule Bff.ProcessingController do
               {"Content-Type", "application/json"}
              ]    
     body = Poison.encode!(%{user_id: 1})
-    {:ok, %HTTPoison.Response{body: body}} = HTTPoison.post("http://procesamiento:8000/topicUser/", body, header, [])
+    
+    case HTTPoison.post("http://procesamiento:8000/topicUser/", body, header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
 
-    IO.puts body
+        conn
+        |> put_status(200)
+        |> render(Bff.ProcessingView, "topic_user.json", body: body)
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
 
-    IO.puts "get"
-    conn
-    |> put_status(200)
-    |> render(Bff.ProcessingView, "topic_user.json", body: body)
+    end
+
   end
+
+  def update_model(conn, assigns) do
+
+    header = [
+              {"Content-Type", "application/json"}
+             ]    
+
+    body = Poison.encode!(%{})
+
+    case HTTPoison.post("http://procesamiento:8000/ldamodel/", body, header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+
+        conn
+        |> put_status(200)
+        |> render(Bff.ProcessingView, "update_model.json", body: body)
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+
+
+  end  
 
 end
