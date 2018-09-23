@@ -105,4 +105,44 @@ defmodule Bff.AdminController do
 
   end
 
+  def update_account(conn, %{"id" => id, "profile" => %{"name" => name, "last_name" => last_name, "phone" => phone}}) do
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    IO.inspect ""
+    IO.inspect ""
+    IO.inspect ""
+    IO.inspect ""
+    IO.inspect ""
+    IO.inspect id
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+    body = %{
+              id: id,
+              action: "update_account",
+              profile: %{
+                "name" => name,
+                "last_name" => last_name,
+                "phone" => phone
+              }
+            }
+
+    body_request = Poison.encode!(body)
+    case HTTPoison.put("http://user:4000/api/users/", body_request, header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+        IO.inspect hash_response
+
+        conn
+        |> put_status(200)
+        |> render(Bff.AdminView, "same.json", %{data: hash_response})
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+  end
+
 end

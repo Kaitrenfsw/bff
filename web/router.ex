@@ -20,5 +20,6 @@ defmodule Bff.Router do
     post "/processing/model", ProcessingController, :update_model
     get "/users", AdminController, :index
     delete "/users", AdminController, :delete_account
+    put "/users", AdminController, :update_account
   end
 end

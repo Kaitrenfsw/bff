@@ -8,7 +8,6 @@ defmodule Bff.UserController do
              ]    
     user = %{session: %{email: email, password: password}}
     body_request = Poison.encode!(user)
-    IO.inspect HTTPoison.post("http://user:4000/api/sign_in/", body_request, header, [])
     case HTTPoison.post("http://user:4000/api/sign_in/", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
@@ -32,5 +31,8 @@ defmodule Bff.UserController do
 
 
   end
+
+
+
 
 end
