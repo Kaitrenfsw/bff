@@ -19,7 +19,7 @@ defmodule Bff.UserController do
         else
           conn
           |> put_status(401)
-          |> render(Bff.ErrorView, "401.json")
+          |> render(Bff.ErrorView, "401.json", message: hash_response)
         end
 
       {:error, _response} ->
@@ -33,21 +33,24 @@ defmodule Bff.UserController do
   end
 
   def show(conn, _assign) do
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
     header = [
-              {"Content-Type", "application/json"}
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
              ]
 
 
     case HTTPoison.get("http://user:4000/api/profile/", header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
-        data = hash_response["data"]
+        data = hash_response
         conn
         |> put_status(200)
         |> render(Bff.UserView, "same.json", %{data: data})
       {:error, _response} ->
         conn
-        |> put_status(401)
+        |> put_status(500)
         |> render(Bff.ErrorView, "500.json")
 
     end

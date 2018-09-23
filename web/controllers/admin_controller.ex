@@ -24,7 +24,6 @@ defmodule Bff.AdminController do
       action: "create_account"
     }
 
-    IO.inspect user
     body_request = Poison.encode!(user)
     case HTTPoison.post("http://user:4000/api/account/", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
@@ -38,7 +37,7 @@ defmodule Bff.AdminController do
         else
           error = hash_response["errors"] || hash_response["error"]
           conn
-          |> put_status(401)
+          |> put_status(422)
           |> render(Bff.ErrorView, "service_error.json", %{error: error})
         end
 

@@ -1,8 +1,8 @@
 defmodule Bff.ErrorView do
   use Bff.Web, :view
 
-  def render("401.json", _assigns) do
-    %{errors: %{detail: "Incorrect credentials"}}
+  def render("401.json", %{message: message} ) do
+    message 
   end
 
   def render("404.json", _assigns) do
