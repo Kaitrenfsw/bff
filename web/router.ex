@@ -21,5 +21,7 @@ defmodule Bff.Router do
     get "/users", AdminController, :index
     delete "/users", AdminController, :delete_account
     put "/users", AdminController, :update_account
+    get "/profile", UserController, :show
+    put "/profile", UserController, :update
   end
 end
