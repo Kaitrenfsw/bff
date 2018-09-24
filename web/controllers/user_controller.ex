@@ -90,33 +90,49 @@ defmodule Bff.UserController do
   end
 
 
-  # def topics(conn, _assign) do
-  #   header = [
-  #             {"Content-Type", "application/json"}
-  #            ]
+  def topics(conn, %{"id" => id}) do
+    header = [
+              {"Content-Type", "application/json"}
+             ]
              
-  #   user = %{session: %{email: email, password: password}}
-  #   body_request = Poison.encode!(user)
-  #   case HTTPoison.post("http://business-rules:8000/topicUser/pk/", body_request, header, []) do
-  #     {:ok, %HTTPoison.Response{body: body}} ->
-  #       hash_response = Poison.decode!(body)
-  #       if Map.has_key?(hash_response, "code") and hash_response["code"] == 20101 do
-  #         data = hash_response["data"]
-  #         conn
-  #         |> put_status(200)
-  #         |> render(Bff.UserView, "login.json", %{data: data})
-  #       else
-  #         conn
-  #         |> put_status(401)
-  #         |> render(Bff.ErrorView, "401.json")
-  #       end
+    case HTTPoison.get("http://business-rules:8001/topicUser/#{id}/", header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+        conn
+        |> put_status(200)
+        |> render(Bff.WormholeView, "tunnel.json", %{data: hash_response})
 
-  #     {:error, _response} ->
-  #       conn
-  #       |> put_status(401)
-  #       |> render(Bff.ErrorView, "500.json")
+      {:error, _response} ->
+        conn
+        |> put_status(401)
+        |> render(Bff.ErrorView, "500.json")
 
-  #   end
-  # end
+    end
+  end
+
+  def update_topics(conn, %{"id" => id, "user_topics_id" => topics_ids}) do
+    header = [
+              {"Content-Type", "application/json"}
+             ]
+    body = %{
+      "user_topics_id" => topics_ids,
+      "user_id" => id
+    }
+
+    body_request = Poison.encode!(body)
+    case HTTPoison.put("http://business-rules:8001/topicUser/#{id}/", body_request, header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+        conn
+        |> put_status(200)
+        |> render(Bff.WormholeView, "tunnel.json", %{data: hash_response})
+
+      {:error, _response} ->
+        conn
+        |> put_status(401)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+  end
 
 end

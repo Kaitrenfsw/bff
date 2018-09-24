@@ -23,5 +23,9 @@ defmodule Bff.Router do
     put "/users", AdminController, :update_account
     get "/profile", UserController, :show
     put "/profile", UserController, :update
+    get "/topics", TopicController, :index
+    get "/topics/:id", TopicController, :show
+    get "/topicUser/:id", UserController, :topics
+    put "/topicUser/:id", UserController, :update_topics
   end
 end

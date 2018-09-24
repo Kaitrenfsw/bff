@@ -8,7 +8,7 @@ defmodule Bff.UserView do
       	id: data["id"],
       	email: data["email"],
       	token: data["access_token"],
-        user_type: data["user_type"]
+        permissions: [%{group: data["user_type"]}]
       }
     }
   end
