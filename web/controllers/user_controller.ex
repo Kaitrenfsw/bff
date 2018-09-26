@@ -208,4 +208,71 @@ defmodule Bff.UserController do
 
   end
 
+
+  def relevant_suggestions(conn, %{"topic_id" => topic_id}) do
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+
+
+
+    filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: topic_id}]} ]
+    filters = Poison.encode! filters
+
+    query = "categorized_data:4000/api/documents/?page_size=30&filters=" <> filters
+    
+    case HTTPoison.get(query, header, []) do
+      {:ok, %HTTPoison.Response{body: news_body}} ->
+
+      {:ok, %HTTPoison.Response{body: topics_body}} = HTTPoison.get("http://business-rules:8001/topic/", header, [])
+      hash_of_topics = Enum.map(Poison.decode!(topics_body), fn v -> 
+        {v["id"], v["name"]} 
+      end)
+      |> Map.new
+
+        news_decoded_body = Poison.decode! news_body
+        new = Enum.map(news_decoded_body["documents"]["records"], fn k -> 
+          topics_with_name = Enum.map(k["topics"], 
+                fn l -> 
+                  {
+                    inspect(l["id"]),
+                    %{"topic_name" => hash_of_topics[l["id"]],
+                                            "id" => l["id"],
+                                            "weight" => l["weight"]
+                                          } 
+                  }
+              end
+                )
+          |> Map.new
+        Map.put(k, "topics", topics_with_name)
+        end
+        )
+
+      array = []
+      # sort_news = Enum.sort_by(new, fn(n) -> 
+      #   IO.inspect "dentro"
+
+      #   IO.inspect n
+      #   {w, s} = Float.parse(n["topics"][inspect(topic_id)]["weight"]) 
+      #   w
+
+      # end)
+      # IO.inspect sort_news
+
+      conn
+      |> put_status(200)
+      |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(new)})
+
+    {:error, _response} ->
+      conn
+      |> put_status(401)
+      |> render(Bff.ErrorView, "500.json")
+    end
+  end
+
+
 end
