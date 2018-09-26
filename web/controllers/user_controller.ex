@@ -253,19 +253,11 @@ defmodule Bff.UserController do
         )
 
       array = []
-      # sort_news = Enum.sort_by(new, fn(n) -> 
-      #   IO.inspect "dentro"
-
-      #   IO.inspect n
-      #   {w, s} = Float.parse(n["topics"][inspect(topic_id)]["weight"]) 
-      #   w
-
-      # end)
-      # IO.inspect sort_news
+      sort_news = Enum.sort_by(new,  fn(n) -> n["topics"][topic_id]["weight"] end)
 
       conn
       |> put_status(200)
-      |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(new)})
+      |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(sort_news)})
 
     {:error, _response} ->
       conn
