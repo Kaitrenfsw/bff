@@ -29,5 +29,6 @@ defmodule Bff.Router do
     get "/topicUser/:id", UserController, :topics
     put "/topicUser/:id", UserController, :update_topics
     put "/account/activate", AdminController, :lock_account
+    get "/suggestions", UserController, :get_suggestions
   end
 end
