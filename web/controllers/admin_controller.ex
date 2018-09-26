@@ -164,7 +164,7 @@ defmodule Bff.AdminController do
     end
   end
 
-  def lock_account(conn, %{"id" => id, "active" => active}) do
+  def lock_account(conn, %{"user" => %{"id" => id, "active" => active}}) do
     [authorization_header | _] = get_req_header(conn, "authorization")
     header = [
               {"Content-Type", "application/json"},
@@ -172,14 +172,18 @@ defmodule Bff.AdminController do
              ]
 
     body = %{
-              id: id
+              user: %{
+                id: id,
+                active: active
+              },
+              action: "admin_accounts"
             }
 
     body_request = Poison.encode!(body)
-    case HTTPoison.put("http://user:4000/api/users/", body_request, header, []) do
+    case HTTPoison.put("http://user:4000/api/account/activate", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
-
+        IO.inspect hash_response
         conn
         |> put_status(200)
         |> render(Bff.AdminView, "same.json", %{data: hash_response})
