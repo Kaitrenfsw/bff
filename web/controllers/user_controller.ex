@@ -135,4 +135,136 @@ defmodule Bff.UserController do
     end
   end
 
+  def get_suggestions(conn, _params) do
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+
+    case HTTPoison.get("http://user:4000/api/profile/", header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+        user_id = hash_response["user"]["id"]
+      case HTTPoison.get("http://business-rules:8001/topicUser/#{user_id}/", header, []) do
+
+        {:ok, %HTTPoison.Response{body: body}} ->
+          {:ok, %HTTPoison.Response{body: topics_body}} = HTTPoison.get("http://business-rules:8001/topic/", header, [])
+          hash_of_topics = Enum.map(Poison.decode!(topics_body), fn v -> 
+            {v["id"], v["name"]} 
+          end)
+          |> Map.new
+          topics = Poison.decode!(body)
+          news = Enum.map(topics, fn v ->
+
+            filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: 16}]} ]
+            filters = Poison.encode! filters
+
+            query = "categorized_data:4000/api/documents/?page_size=30&filters=" <> filters
+            {:ok, %HTTPoison.Response{body: news_body}} = HTTPoison.get(query, header, [])
+            news_decoded_body = Poison.decode! news_body
+            Enum.map(news_decoded_body["documents"]["records"], fn k -> 
+              topics_with_name = Enum.map(k["topics"], 
+                    fn l -> 
+                      IO.inspect l
+                      %{"topic_name" => hash_of_topics[l["id"]],
+                              "id" => l["id"],
+                              "weight" => l["weight"]
+                            } 
+                  end
+                    )
+            Map.put(k, "topics", topics_with_name)
+            end
+            )
+            end
+          )
+
+          array = []
+
+          finished = Enum.reduce(news, array, fn(x, acc) -> acc ++ x end)
+
+          
+
+          conn
+          |> put_status(200)
+          |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(finished)})
+
+        {:error, _response} ->
+          conn
+          |> put_status(401)
+          |> render(Bff.ErrorView, "500.json")
+
+      end
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+
+
+
+  end
+
+
+  def relevant_suggestions(conn, %{"topic_id" => topic_id}) do
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+
+
+
+    filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: topic_id}]} ]
+    filters = Poison.encode! filters
+
+    query = "categorized_data:4000/api/documents/?page_size=30&filters=" <> filters
+    
+    case HTTPoison.get(query, header, []) do
+      {:ok, %HTTPoison.Response{body: news_body}} ->
+
+      {:ok, %HTTPoison.Response{body: topics_body}} = HTTPoison.get("http://business-rules:8001/topic/", header, [])
+      hash_of_topics = Enum.map(Poison.decode!(topics_body), fn v -> 
+        {v["id"], v["name"]} 
+      end)
+      |> Map.new
+
+        news_decoded_body = Poison.decode! news_body
+        new = Enum.map(news_decoded_body["documents"]["records"], fn k -> 
+          topics_with_name = Enum.map(k["topics"], 
+                fn l -> 
+                  {
+                    inspect(l["id"]),
+                    %{"topic_name" => hash_of_topics[l["id"]],
+                                            "id" => l["id"],
+                                            "weight" => l["weight"]
+                                          } 
+                  }
+              end
+                )
+          |> Map.new
+        Map.put(k, "topics", topics_with_name)
+        end
+        )
+
+      array = []
+      sort_news = Enum.sort_by(new,  fn(n) -> n["topics"][topic_id]["weight"] end)
+
+      conn
+      |> put_status(200)
+      |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.reverse(Enum.uniq(sort_news))})
+
+    {:error, _response} ->
+      conn
+      |> put_status(401)
+      |> render(Bff.ErrorView, "500.json")
+    end
+  end
+
+
 end
