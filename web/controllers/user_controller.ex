@@ -257,7 +257,7 @@ defmodule Bff.UserController do
 
       conn
       |> put_status(200)
-      |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(sort_news)})
+      |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.reverse(Enum.uniq(sort_news))})
 
     {:error, _response} ->
       conn
