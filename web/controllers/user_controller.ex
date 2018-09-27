@@ -168,7 +168,6 @@ defmodule Bff.UserController do
             Enum.map(news_decoded_body["documents"]["records"], fn k -> 
               topics_with_name = Enum.map(k["topics"], 
                     fn l -> 
-                      IO.inspect l
                       %{"topic_name" => hash_of_topics[l["id"]],
                               "id" => l["id"],
                               "weight" => l["weight"]
@@ -223,7 +222,7 @@ defmodule Bff.UserController do
     filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: topic_id}]} ]
     filters = Poison.encode! filters
 
-    query = "categorized_data:4000/api/documents/?page_size=30&filters=" <> filters
+    query = "categorized_data:4000/api/documents/?page_size=10&filters=" <> filters
     
     case HTTPoison.get(query, header, []) do
       {:ok, %HTTPoison.Response{body: news_body}} ->
