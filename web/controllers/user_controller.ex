@@ -159,7 +159,7 @@ defmodule Bff.UserController do
           topics = Poison.decode!(body)
           news = Enum.map(topics, fn v ->
 
-            filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: 16}]} ]
+            filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: v["id"]}]} ]
             filters = Poison.encode! filters
 
             query = "categorized_data:4000/api/documents/?page_size=30&filters=" <> filters
@@ -168,13 +168,17 @@ defmodule Bff.UserController do
             Enum.map(news_decoded_body["documents"]["records"], fn k -> 
               topics_with_name = Enum.map(k["topics"], 
                     fn l -> 
-                      %{"topic_name" => hash_of_topics[l["id"]],
-                              "id" => l["id"],
-                              "weight" => l["weight"]
-                            } 
+                      %{
+                          "topic_name" => hash_of_topics[l["id"]],
+                          "id" => l["id"],
+                          "weight" => l["weight"]
+                        } 
                   end
                     )
-            Map.put(k, "topics", topics_with_name)
+            sort_topics_with_name = Enum.reverse(Enum.sort_by(topics_with_name,  fn(n) -> n["weight"] end))
+
+            Map.put(k, "topics", sort_topics_with_name)
+
             end
             )
             end

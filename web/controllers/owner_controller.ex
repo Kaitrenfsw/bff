@@ -1,11 +1,10 @@
-defmodule Bff.AdminController do
+defmodule Bff.OwnerController do
   use Bff.Web, :controller
 
   def create_account(conn, %{ 
                             "email" => email, 
                             "password" => password, 
-                            "password_confirmation" => password_confirmation,
-                            "group" => group
+                            "password_confirmation" => password_confirmation
                         }) do
     [authorization_header | _] = get_req_header(conn, "authorization")
 
@@ -15,20 +14,33 @@ defmodule Bff.AdminController do
              ]
 
     user = %{user: %{
-        group: group,
         email: email,
         password: password,
         password_confirmation: password_confirmation
       },
-      action: "create_account"
+      action: "owner_action"
     }
 
     body_request = Poison.encode!(user)
-    case HTTPoison.post("http://user:4000/api/account/", body_request, header, []) do
+    case HTTPoison.post("http://user:4000/api/idm_account/", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
 
         hash_response = Poison.decode!(body)
+
         if Map.has_key?(hash_response, "code") and hash_response["code"] == 20100 do
+
+          permission = %{permission: %{
+              object_name: "user",
+              object_id: Integer.to_string(hash_response["id"]),
+              group: "owner"
+            },
+            action: "owner_action"
+          }
+
+          permission_body_request = Poison.encode!(permission)
+
+          {:ok, %HTTPoison.Response{body: permission_body}} = HTTPoison.post("http://user:4000/api/permissions/", permission_body_request, header, [])
+          
           conn
           |> put_status(200)
           |> render(Bff.AdminView, "create.json", %{data: hash_response})
@@ -57,7 +69,7 @@ defmodule Bff.AdminController do
               {"authorization", authorization_header}
              ]
 
-    case HTTPoison.get("http://user:4000/api/users?action=get_accounts", header, []) do
+    case HTTPoison.get("http://user:4000/api/owners/idms?action=owner_action", header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
         conn
@@ -133,7 +145,7 @@ defmodule Bff.AdminController do
 
     body = %{
               id: id,
-              action: "update_account",
+              action: "owner_action",
               profile: %{
                 "name" => name,
                 "last_name" => last_name,
@@ -142,7 +154,7 @@ defmodule Bff.AdminController do
             }
 
     body_request = Poison.encode!(body)
-    case HTTPoison.put("http://user:4000/api/users/", body_request, header, []) do
+    case HTTPoison.put("http://user:4000/api/owners/idms", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
 
@@ -157,35 +169,5 @@ defmodule Bff.AdminController do
     end
   end
 
-  def lock_account(conn, %{"user" => %{"id" => id, "active" => active}}) do
-    [authorization_header | _] = get_req_header(conn, "authorization")
-    header = [
-              {"Content-Type", "application/json"},
-              {"authorization", authorization_header}
-             ]
-
-    body = %{
-              user: %{
-                id: id,
-                active: active
-              },
-              action: "admin_accounts"
-            }
-
-    body_request = Poison.encode!(body)
-    case HTTPoison.put("http://user:4000/api/account/activate", body_request, header, []) do
-      {:ok, %HTTPoison.Response{body: body}} ->
-        hash_response = Poison.decode!(body)
-        IO.inspect hash_response
-        conn
-        |> put_status(200)
-        |> render(Bff.AdminView, "same.json", %{data: hash_response})
-      {:error, _response} ->
-        conn
-        |> put_status(500)
-        |> render(Bff.ErrorView, "500.json")
-
-    end
-  end  
 
 end

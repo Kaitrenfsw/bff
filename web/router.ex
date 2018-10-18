@@ -31,5 +31,8 @@ defmodule Bff.Router do
     put "/account/activate", AdminController, :lock_account
     get "/suggestions", UserController, :get_suggestions
     get "/relevant_suggestions", UserController, :relevant_suggestions
+    post "/idms", OwnerController, :create_account
+    get "/idms", OwnerController, :index
+    put "/idms/:id", OwnerController, :update
   end
 end
