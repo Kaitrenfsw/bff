@@ -33,6 +33,7 @@ defmodule Bff.Router do
     get "/relevant_suggestions", UserController, :relevant_suggestions
     post "/idms", OwnerController, :create_account
     get "/idms", OwnerController, :index
-    put "/idms/:id", OwnerController, :update_account
+    put "/idms", OwnerController, :update_account
+    delete "/idms", OwnerController, :delete_account
   end
 end

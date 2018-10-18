@@ -115,13 +115,9 @@ defmodule Bff.OwnerController do
               {"authorization", authorization_header}
              ]
 
-    body = %{
-              id: id,
-              action: "delete_account"
-            }
 
-    body_request = Poison.encode!(body)
-    case HTTPoison.delete("http://user:4000/api/users/?id=#{id}&action=delete_account", header, []) do
+
+    case HTTPoison.delete("http://user:4000/api/owners/idms/?id=#{id}&action=owner_action", header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
         conn
