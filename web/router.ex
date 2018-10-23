@@ -35,5 +35,6 @@ defmodule Bff.Router do
     get "/idms", OwnerController, :index
     put "/idms", OwnerController, :update_account
     delete "/idms", OwnerController, :delete_account
+    get "/visualizations/graph", VisualizationController, :get_graph
   end
 end
