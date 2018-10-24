@@ -134,17 +134,17 @@ defmodule Bff.VisualizationController do
             {:error, _response} ->
 
               %{error: "No fue posible consultar información para el topico #{topic_id}", topic_id: topic_id}
-          end
+            end
 
-        end)
-      }
+          end)
+        }
 
 
 
-      IO.inspect responses_array
-      conn
-      |> put_status(200)
-      |> render(Bff.WormholeView, "tunnel.json", %{data: responses_array})
+        IO.inspect responses_array
+        conn
+        |> put_status(200)
+        |> render(Bff.WormholeView, "tunnel.json", %{data: responses_array})
 
 
       {:error, _response} ->
@@ -155,63 +155,88 @@ defmodule Bff.VisualizationController do
     end    
   end
 
-  # def get_hot_topics(conn, %{"topics_ids" => topics_ids}) do
-  #   header = [
-  #             {"Content-Type", "application/json"}
-  #            ]
+  def get_hot_topics(conn, %{"topics_ids" => topics_ids}) do
+    header = [
+              {"Content-Type", "application/json"}
+             ]
 
-  #   date = "2015-09-28"
+    date = "2015-09-28"
+    topics_ids = String.split(topics_ids, ",")
 
-  #   case HTTPoison.get("http://business-rules:8001/dateConversion/#{date}/", header, []) do
-  #     {:ok, %HTTPoison.Response{body: dates_body}} ->
-  #       dates_hash_response = Poison.decode!(dates_body)
-  #       [first_date| [second_date | [third_date | [fourth_date | _] ]]] = dates_hash_response
+    case HTTPoison.get("http://business-rules:8001/dateConversion/#{date}/", header, []) do
+      {:ok, %HTTPoison.Response{body: dates_body}} ->
+        dates_hash_response = Poison.decode!(dates_body)
+        [first_date| [second_date | [third_date | [fourth_date | _] ]]] = dates_hash_response
 
-  #       dates_hash_response = [first_date, second_date, third_date, fourth_date]
+        dates_hash_response = [first_date, second_date, third_date, fourth_date]
 
-  #       hash_with_integer = Enum.map(dates_hash_response, fn v -> 
-  #         {v["week"], v["sunday_date"]} 
-  #       end)
-  #       |> Map.new
+        sunday_array = Enum.map(dates_hash_response, fn v -> 
+          v["sunday_date"]
+        end)
+
+        [first_date | _] = dates_hash_response
+
+        responses_array = %{ topics: Enum.map(topics_ids, fn topic_id ->
+          filters = [%{type: "nested", path: "topics", queries: [ %{ type: "match", field: "id", value: topic_id } ] }]
+
+          filters = Poison.encode! filters
+
+          grouping = [%{type: "range", key: "int_published",  opts: %{ step: 1, min: first_date["week"], max: (first_date["week"] + 4) } }]
+          grouping = Poison.encode! grouping
+
+          query = "http://categorized_data:4000/api/documents/?page_size=30&filters=" <> filters <> "&grouping=" <> grouping
+
+          case HTTPoison.get(query, header, []) do
+            {:ok, %HTTPoison.Response{body: body}} ->
+              hash_response = Poison.decode!(body)
+              case HTTPoison.get("http://business-rules:8001/topic/#{topic_id}/", header, []) do
+                {:ok, %HTTPoison.Response{body: business_body}} ->
+                  
+                  [business_hash_response | _] = Poison.decode!(business_body)
+                  buckets = Enum.drop(hash_response["buckets"], -1)
+                  buckets = Enum.drop(buckets, 1)
+                  value = first_date["week"] - 1
+
+                  counts = Enum.map(buckets ,fn v ->
+                    v["data"]["document_count"]
+                  end)
+
+                  [first_elem | [second_elem | [third_elem | [ fourth_elem | _]]]] = counts
+
+                  response = %{ topic_id: topic_id, 
+                                topic_name: business_hash_response["name"],
+                                coherence: business_hash_response["coherence"],
+                                diff: fourth_elem - first_elem,
+                                total_count: first_elem + second_elem + third_elem + fourth_elem
+                              }
+
+                {:error, _response} ->
+                   %{error: "No fue posible consultar información para el topico #{topic_id}", topic_id: topic_id}
+
+              end              
+
+            {:error, _response} ->
+
+              %{error: "No fue posible consultar información para el topico #{topic_id}", topic_id: topic_id}
+            end
+
+          end)
+        } 
+
+        conn
+        |> put_status(200)
+        |> render(Bff.WormholeView, "tunnel.json", %{data: responses_array})
 
 
-  #       [first_date | _] = dates_hash_response
-  #       filters = [%{type: "nested", path: "topics", queries: [ %{ type: "match", field: "id", value: topic_id } ] }]
 
-  #       filters = Poison.encode! filters
 
-  #       grouping = [%{type: "range", key: "int_published",  opts: %{ step: 1, min: first_date["week"], max: (first_date["week"] + 4) } }]
-  #       grouping = Poison.encode! grouping
+      {:error, _response} ->
+        conn
+        |> put_status(401)
+        |> render(Bff.ErrorView, "500.json")
 
-  #       query = "http://categorized_data:4000/api/documents/?page_size=30&filters=" <> filters <> "&grouping=" <> grouping
-
-  #       case HTTPoison.get(query, header, []) do
-  #         {:ok, %HTTPoison.Response{body: body}} ->
-  #           hash_response = Poison.decode!(body)
-  #           value = first_date["week"] - 1
-
-  #           response = %{weeks: Enum.map(hash_response["buckets"], fn v -> 
-  #             value = value + 1
-  #             %{week: hash_with_integer[round(value)], count: v["data"]["document_count"]} 
-  #           end)}
-
-  #           conn
-  #           |> put_status(200)
-  #           |> render(Bff.WormholeView, "tunnel.json", %{data: response})
-
-  #         {:error, _response} ->
-  #           conn
-  #           |> put_status(401)
-  #           |> render(Bff.ErrorView, "500.json")
-
-  #       end 
-  #     {:error, _response} ->
-  #       conn
-  #       |> put_status(401)
-  #       |> render(Bff.ErrorView, "500.json")
-
-  #   end    
-  # end
+    end    
+  end
 
 
 end
