@@ -165,5 +165,36 @@ defmodule Bff.OwnerController do
     end
   end
 
+  def update_password(conn, %{"id" => id, "password" => password, "password_confirmation" => password_confirmation}) do
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+    body = %{
+              id: id,
+              action: "owner_action",
+              password: password,
+              password_confirmation: password_confirmation
+            }
+
+    body_request = Poison.encode!(body)
+    case HTTPoison.put("http://user:4000/api/owners/idms/update_password", body_request, header, []) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+
+        conn
+        |> put_status(200)
+        |> render(Bff.AdminView, "same.json", %{data: hash_response})
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+  end  
+  
+
 
 end

@@ -34,6 +34,7 @@ defmodule Bff.Router do
     post "/idms", OwnerController, :create_account
     get "/idms", OwnerController, :index
     put "/idms", OwnerController, :update_account
+    put "/idms/password", OwnerController, :update_password
     delete "/idms", OwnerController, :delete_account
   end
 end
