@@ -113,7 +113,7 @@ defmodule Bff.IdmController do
                     {"Content-Type", "application/json"}
                    ]        
 
-          case HTTPoison.delete("http://business-rules:8001/userDashboard/#{user_response["user"]["id"]}/", params, []) do
+          case HTTPoison.delete("http://business-rules:8001/userDashboard/#{user_response["user"]["id"]}/", header, []) do
             {:ok, %HTTPoison.Response{body: body}} ->
               hash_response = Poison.decode!(body)
 
