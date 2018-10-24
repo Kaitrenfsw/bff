@@ -39,6 +39,8 @@ defmodule Bff.Router do
     get "/visualizations/graph", VisualizationController, :get_graph
     get "/visualizations/frequency_curve", VisualizationController, :get_frequency_curve
     get "/visualizations/hot_topics", VisualizationController, :get_hot_topics
-
+    get "/idms/dashboard", IdmController, :get_dashboard
+    put "/idms/dashboard", IdmController, :update_dashboard
+    delete "/idms/dashboard", IdmController, :delete_dashboard
   end
 end
