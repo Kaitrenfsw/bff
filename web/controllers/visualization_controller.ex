@@ -1,7 +1,7 @@
 defmodule Bff.VisualizationController do
   use Bff.Web, :controller
 
-
+  plug :check_topics_ids when action in [:get_multiple_frequency_curve, :get_hot_topics]
 
   def get_graph(conn, %{"topic_id" => topic_id}) do
     header = [
@@ -141,7 +141,6 @@ defmodule Bff.VisualizationController do
 
 
 
-        IO.inspect responses_array
         conn
         |> put_status(200)
         |> render(Bff.WormholeView, "tunnel.json", %{data: responses_array})
@@ -236,6 +235,18 @@ defmodule Bff.VisualizationController do
         |> render(Bff.ErrorView, "500.json")
 
     end    
+  end
+
+
+  defp check_topics_ids(conn, _) do
+    if conn.params["topics_ids"] == "" do
+      conn
+      |> put_status(422)
+      |> render(Bff.ErrorView, "401.json", %{error: "No tienes permisos para acceder a esta empresa"})
+      |> Plug.Conn.halt()
+    else
+      conn
+    end
   end
 
 
