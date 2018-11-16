@@ -15,7 +15,7 @@ defmodule Bff.UserController do
           data = hash_response["data"]
 
           body_tracer = Poison.encode!(%{user_id: data["id"]})
-          case HTTPoison.post("http://tracer:4000/api/login_log/", body_tracer, header, []) do
+          case HTTPoison.post("http://tracer:4000/api/login_logs/", body_tracer, header, []) do
 
             {:ok, %HTTPoison.Response{body: body}} ->
               conn
