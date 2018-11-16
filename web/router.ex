@@ -43,5 +43,17 @@ defmodule Bff.Router do
     get "/idms/dashboard", IdmController, :get_dashboard
     put "/idms/dashboard", IdmController, :update_dashboard
     delete "/idms/dashboard", IdmController, :delete_dashboard
+    get "/new_votes", VoteController, :new_votes
+    get "/source_votes", VoteController, :source_votes
+    get "/one_source_votes", VoteController, :one_source_votes
+    put "/update_user_vote", VoteController, :update_user_vote
+    get "/get_user_votes", VoteController, :get_user_votes
+    delete "/remove_user_source", VoteController, :remove_user_source
+    post "/create_user_source", VoteController, :create_user_source
+    get "/get_source_user", VoteController, :get_source_user
+    post "/create_user_source", VoteController, :create_user_source
+    delete "/remove_content_user", VoteController, :remove_content_user
+
+
   end
 end
