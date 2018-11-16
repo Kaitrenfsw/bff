@@ -1,8 +1,6 @@
 defmodule Bff.VoteController do
   use Bff.Web, :controller
 
-
-
   def new_votes(conn, _assign) do
     header = [
               {"Content-Type", "application/json"}
@@ -24,7 +22,6 @@ defmodule Bff.VoteController do
 
     end
   end
-
 
   def source_votes(conn, _assign) do
     header = [
@@ -48,7 +45,6 @@ defmodule Bff.VoteController do
     end
   end
 
-
   def one_source_votes(conn, %{"source_id" => source_id}) do
     header = [
               {"Content-Type", "application/json"}
@@ -70,7 +66,6 @@ defmodule Bff.VoteController do
 
     end
   end  
-
 
   def update_user_vote(conn, %{"user_id" => user_id, "new_id" => new_id, "source_id" => source_id, "vote" => vote}) do
     header = [
@@ -147,7 +142,7 @@ defmodule Bff.VoteController do
               {"Content-Type", "application/json"}
              ]
 
-    body = %{new_id: new_id, source_id: source_id}
+    body = %{user_id: user_id, source_id: source_id}
 
     body_request = Poison.encode!(body)
 
@@ -197,7 +192,7 @@ defmodule Bff.VoteController do
               {"Content-Type", "application/json"}
              ]
 
-    body = %{new_id: new_id, content_id: content_id}
+    body = %{user_id: user_id, content_id: content_id}
 
     body_request = Poison.encode!(body)
 
