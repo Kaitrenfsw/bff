@@ -51,7 +51,7 @@ defmodule Bff.Router do
     delete "/remove_user_source", VoteController, :remove_user_source
     post "/create_user_source", VoteController, :create_user_source
     get "/get_source_user", VoteController, :get_source_user
-    post "/create_user_source", VoteController, :create_user_source
+    post "/create_content_user", VoteController, :create_content_user
     delete "/remove_content_user", VoteController, :remove_content_user
 
 

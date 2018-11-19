@@ -72,13 +72,11 @@ defmodule Bff.VoteController do
               {"Content-Type", "application/json"}
              ]
 
-    body = %{new_id: new_id, source_id: source_id, vote: vote}
-
+    body = %{new_id: new_id, source_id: 17, vote: vote}
     body_request = Poison.encode!(body)
 
     case HTTPoison.put("http://business-rules:8001/userVote/#{user_id}/", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
-
         hash_response = Poison.decode!(body)
 
         conn
@@ -186,7 +184,7 @@ defmodule Bff.VoteController do
     end
   end
 
-  def create_user_source(conn, %{"user_id" => user_id, "content_id" => content_id}) do
+  def create_content_user(conn, %{"user_id" => user_id, "content_id" => content_id}) do
 
     header = [
               {"Content-Type", "application/json"}
