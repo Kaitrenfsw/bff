@@ -216,7 +216,7 @@ defmodule Bff.VoteController do
               {"Content-Type", "application/json"}
              ]        
 
-    case HTTPoison.delete("http://business-rules:8001/sourceUser/#{id}/", header, []) do
+    case HTTPoison.delete("http://business-rules:8001/contentUser/#{id}/", header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
 
@@ -230,6 +230,80 @@ defmodule Bff.VoteController do
         |> render(Bff.ErrorView, "500.json")
 
     end
+  end
+
+  def saved_news(conn, _assign) do
+    
+
+
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+    case HTTPoison.get("http://user:4000/api/account/", header, []) do
+      {:ok, %HTTPoison.Response{body: user_body}} ->
+        user_response = Poison.decode!(user_body)
+        if Map.has_key?(user_response, "error") do
+          conn
+          |> put_status(401)
+          |> render(Bff.ErrorView, "401.json")
+        else
+
+          header = [
+                    {"Content-Type", "application/json"}
+                   ]
+
+          case HTTPoison.get("http://business-rules:8001/contentUser/#{user_response["user"]["id"]}/", header, []) do
+
+            {:ok, %HTTPoison.Response{body: body}} ->
+
+              hash_response = Poison.decode!(body)
+              array = Enum.map(hash_response["contents_id"], fn v -> 
+                filters = [ %{ "type" => "match", "field" => "_id", "value" => v["content_id"] } ]
+
+                filters = Poison.encode! filters
+
+
+                query = "http://categorized_data:4000/api/documents/?page_size=30&filters=" <> filters
+
+                case HTTPoison.get(query, header, []) do
+
+                  {:ok, %HTTPoison.Response{body: new_body}} ->
+
+                    new_hash_response = Poison.decode!(new_body)
+                    [new | _] = new_hash_response["documents"]["records"]
+                    new
+
+                  {:error, _response} ->
+                    %{message: "problema"}
+
+                end
+              end) 
+
+              conn
+              |> put_status(200)
+              |> render(Bff.WormholeView, "tunnel.json", %{data: array})
+
+            {:error, _response} ->
+              conn
+              |> put_status(401)
+              |> render(Bff.ErrorView, "500.json")
+
+          end
+
+        end
+
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+
+    end
+
+
   end
 
 end
