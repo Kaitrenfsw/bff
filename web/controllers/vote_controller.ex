@@ -261,7 +261,13 @@ defmodule Bff.VoteController do
             {:ok, %HTTPoison.Response{body: body}} ->
 
               hash_response = Poison.decode!(body)
-              array = Enum.map(hash_response["contents_id"], fn v -> 
+              IO.inspect hash_response
+              IO.inspect "hola"
+              IO.inspect "hola"
+              IO.inspect "hola"
+              IO.inspect "hola"
+              IO.inspect "hola"
+              array = Enum.map(hash_response["contents"], fn v -> 
                 filters = [ %{ "type" => "match", "field" => "_id", "value" => v["content_id"] } ]
 
                 filters = Poison.encode! filters
@@ -282,7 +288,7 @@ defmodule Bff.VoteController do
 
                 end
               end) 
-
+              IO.inspect array
               conn
               |> put_status(200)
               |> render(Bff.WormholeView, "tunnel.json", %{data: array})

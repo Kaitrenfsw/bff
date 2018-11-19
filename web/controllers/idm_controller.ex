@@ -10,7 +10,6 @@ defmodule Bff.IdmController do
               {"authorization", authorization_header}
              ]
 
-             IO.inspect authorization_header
     case HTTPoison.get("http://user:4000/api/account/", header, []) do
       {:ok, %HTTPoison.Response{body: user_body}} ->
         user_response = Poison.decode!(user_body)
