@@ -312,7 +312,7 @@ defmodule Bff.VoteController do
              ]
 
 
-    case HTTPoison.get("http://business-rules:8001/source/" header, []) do
+    case HTTPoison.get("http://business-rules:8001/source/", header, []) do
       
       {:ok, %HTTPoison.Response{body: body}} ->
 
