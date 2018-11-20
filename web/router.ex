@@ -54,6 +54,7 @@ defmodule Bff.Router do
     post "/create_content_user", VoteController, :create_content_user
     delete "/remove_content_user", VoteController, :remove_content_user
     get "/saved_news", VoteController, :saved_news
+    get "/get_sources", VoteController, :get_sources
 
   end
 end
