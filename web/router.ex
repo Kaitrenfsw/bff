@@ -55,7 +55,7 @@ defmodule Bff.Router do
     delete "/remove_content_user", VoteController, :remove_content_user
     get "/saved_news", VoteController, :saved_news
     get "/get_sources", VoteController, :get_sources
-    get "idms_sources", VoteController, :get_topic_stats
+    get "/idms_sources", VoteController, :get_topic_stats
 
   end
 end
