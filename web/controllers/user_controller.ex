@@ -175,8 +175,7 @@ defmodule Bff.UserController do
               {v["id"], v} 
             end)
             |> Map.new
-
-
+            
             case HTTPoison.get("http://business-rules:8001/topicUser/#{user_id}/", header, []) do
 
               {:ok, %HTTPoison.Response{body: body}} ->
@@ -204,7 +203,7 @@ defmodule Bff.UserController do
                               } 
                         end
                           )
-                    is_fav = if hash_of_own_sources["source_id"], do: 1, else: 0
+                    is_fav = if hash_of_own_sources[k["source_id"]], do: 1, else: 0
                     sort_topics_with_name = Enum.reverse(Enum.sort_by(topics_with_name,  fn(n) -> n["weight"] end))
                     k
                     |> Map.put("topics", sort_topics_with_name)
@@ -220,7 +219,6 @@ defmodule Bff.UserController do
                 finished = Enum.reduce(news, array, fn(x, acc) -> acc ++ x end)
 
                 
-                IO.inspect finished
                 conn
                 |> put_status(200)
                 |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(finished)})
