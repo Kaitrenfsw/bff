@@ -305,22 +305,55 @@ defmodule Bff.VoteController do
 
   end
 
-  def get_sources(conn, _assigns) do
+  def get_sources(conn, %{"user_id" => user_id}) do
 
     header = [
               {"Content-Type", "application/json"}
              ]
 
+    case HTTPoison.get("http://business-rules:8001/sourceUser/#{user_id}/", header, []) do
 
-    case HTTPoison.get("http://business-rules:8001/source/", header, []) do
-      
-      {:ok, %HTTPoison.Response{body: body}} ->
+      {:ok, %HTTPoison.Response{body: own_body}} ->
 
-        hash_response = Poison.decode!(body)
+        own_hash_response = Poison.decode!(own_body)
+  
+        hash_of_own_sources = Enum.map(own_hash_response["sources"], fn v -> 
+          {v["id"], v} 
+        end)
+        |> Map.new
 
-        conn
-        |> put_status(200)
-        |> render(Bff.WormholeView, "tunnel.json", %{data: hash_response})
+        header = [
+                  {"Content-Type", "application/json"}
+                 ]
+
+        case HTTPoison.get("http://business-rules:8001/source/", header, []) do
+          
+          {:ok, %HTTPoison.Response{body: body}} ->
+
+            hash_response = Poison.decode!(body)
+
+            hash_with_favorite = Enum.map(hash_response, fn v -> 
+
+              case hash_of_own_sources[v["id"]] do
+                
+                nil ->
+                  %{site: v["site"], name: v["name"], id: v["id"], favorite: 0}
+                _ ->
+                  %{site: v["site"], name: v["name"], id: v["id"], favorite: 1}
+
+              end
+
+            end)
+            conn
+            |> put_status(200)
+            |> render(Bff.WormholeView, "tunnel.json", %{data: hash_with_favorite})
+
+          {:error, _response} ->
+            conn
+            |> put_status(401)
+            |> render(Bff.ErrorView, "500.json")
+
+        end
 
       {:error, _response} ->
         conn
@@ -328,6 +361,8 @@ defmodule Bff.VoteController do
         |> render(Bff.ErrorView, "500.json")
 
     end
+
+
 
   end
 
