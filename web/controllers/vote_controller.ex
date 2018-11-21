@@ -260,6 +260,49 @@ defmodule Bff.VoteController do
 
             {:ok, %HTTPoison.Response{body: body}} ->
 
+
+              case HTTPoison.get("http://business-rules:8001/sourceUser/#{user_response["user"]["id"]}/", header, []) do
+
+                {:ok, %HTTPoison.Response{body: own_body}} ->
+
+                  own_hash_response = Poison.decode!(own_body)
+            
+                  hash_of_own_sources = Enum.map(own_hash_response["sources"], fn v -> 
+                    {v["id"], v} 
+                  end)
+                  |> Map.new
+
+
+                {:error, _response} ->
+                  hash_of_own_sources = %{}
+
+              end
+
+              case HTTPoison.get("http://business-rules:8001/userVote/#{user_response["user"]["id"]}/", header, []) do
+                {:ok, %HTTPoison.Response{body: user_vote_body}} ->
+                  user_vote_hash_response = Poison.decode!(user_vote_body)
+                  user_vote_hash = Enum.map(user_vote_hash_response["records"], fn v -> 
+                    {v["new_id"], v}
+                  end) 
+                  |> Map.new
+
+                {:error, _response} ->
+                  user_vote_hash = %{}
+              end
+              
+              case HTTPoison.get("http://business-rules:8001/topicUser/#{user_response["user"]["id"]}/", header, []) do
+
+                {:ok, %HTTPoison.Response{body: body}} ->
+                  {:ok, %HTTPoison.Response{body: topics_body}} = HTTPoison.get("http://business-rules:8001/topic/", header, [])
+                  hash_of_topics = Enum.map(Poison.decode!(topics_body), fn v -> 
+                    {v["id"], v["name"]} 
+                  end)
+                  |> Map.new
+
+                {:error, _response} ->
+                  hash_of_topics = %{}
+                end
+
               hash_response = Poison.decode!(body)
               array = Enum.map(hash_response["contents"], fn v -> 
                 filters = [ %{ "type" => "match", "field" => "_id", "value" => v["content_id"] } ]
@@ -277,11 +320,57 @@ defmodule Bff.VoteController do
                     [new | _] = new_hash_response["documents"]["records"]
                     new
 
+                    topics_with_name = Enum.map(new["topics"], 
+                          fn l -> 
+                            %{
+                                "topic_name" => hash_of_topics[l["id"]],
+                                "id" => l["id"],
+                                "weight" => l["weight"]
+                              } 
+                        end
+                          )
+
+                    case HTTPoison.get("http://business-rules:8001/newVotes/#{new["id"]}/", header, []) do
+                      {:ok, %HTTPoison.Response{body: new_votes_body}} ->
+                        new_votes_hash_response = Poison.decode!(new_votes_body)
+
+                        up_votes = new_votes_hash_response["up_votes"]
+                        down_votes = new_votes_hash_response["down_votes"]
+                      {:error, _response} ->
+                        up_votes = 0
+                        down_votes = 0
+
+                    end
+
+
+
+                    is_fav = if hash_of_own_sources[new["source_id"]], do: 1, else: 0
+                    sort_topics_with_name = Enum.reverse(Enum.sort_by(topics_with_name,  fn(n) -> n["weight"] end))
+                    saved = 1
+
+                    case user_vote_hash[new["id"]]["vote"] do
+                      0 ->  
+                        voted = 2
+                      1 ->
+                        voted = 1
+                      _ -> 
+                        voted = 0
+                    end
+
+                    new
+                    |> Map.put("topics", sort_topics_with_name)
+                    |> Map.put("fav_source", is_fav)
+                    |> Map.put("up_votes", up_votes)
+                    |> Map.put("down_votes", down_votes)
+                    |> Map.put("saved", saved)
+                    |> Map.put("voted", voted)
+
                   {:error, _response} ->
                     %{message: "problema"}
 
                 end
               end) 
+              IO.inspect array
               conn
               |> put_status(200)
               |> render(Bff.WormholeView, "tunnel.json", %{data: array})
@@ -301,9 +390,12 @@ defmodule Bff.VoteController do
         |> render(Bff.ErrorView, "500.json")
 
     end
-
-
   end
+
+
+
+
+
 
   def get_sources(conn, %{"user_id" => user_id}) do
 
