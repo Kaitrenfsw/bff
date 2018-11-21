@@ -328,5 +328,48 @@ defmodule Bff.VoteController do
         |> render(Bff.ErrorView, "500.json")
 
     end
+
+  end
+
+  def get_topic_stats(conn, _assigns) do
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+
+    case HTTPoison.get("http://user:4000/api/owners/idms/", header, []) do
+      {:ok, %HTTPoison.Response{body: users_body}} ->
+        users_hash_response = Poison.decode!(users_body)
+
+        users_ids = Enum.map(users_hash_response["users"], fn v -> Integer.to_string(v["id"]) end)
+
+        users_ids_to_request = Enum.join(users_ids, "-")
+
+        request_url = "http://business-rules:8001/topicStats/" <> users_ids_to_request <> "/"
+        case HTTPoison.get(request_url, header, []) do
+          
+          {:ok, %HTTPoison.Response{body: body}} ->
+
+            hash_response = Poison.decode!(body)
+
+            conn
+            |> put_status(200)
+            |> render(Bff.WormholeView, "tunnel.json", %{data: hash_response})
+
+          {:error, _response} ->
+            conn
+            |> put_status(401)
+            |> render(Bff.ErrorView, "500.json")
+
+        end
+
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+    end
+
   end
 end
