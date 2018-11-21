@@ -253,8 +253,15 @@ defmodule Bff.UserController do
                     is_fav = if hash_of_own_sources[k["source_id"]], do: 1, else: 0
                     sort_topics_with_name = Enum.reverse(Enum.sort_by(topics_with_name,  fn(n) -> n["weight"] end))
                     saved = if content_user_hash[k["id"]], do: 1, else: 0
-                    voted = if user_vote_hash[k["id"]]["vote"], do: user_vote_hash[k["id"]]["vote"], else: 0
-                    
+
+                    case user_vote_hash[k["id"]]["vote"] do
+                      0 ->  
+                        voted = 2
+                      1 ->
+                        voted = 1
+                      _ -> 
+                        voted = 0
+                    end
                     k
                     |> Map.put("topics", sort_topics_with_name)
                     |> Map.put("fav_source", is_fav)
