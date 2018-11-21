@@ -190,7 +190,6 @@ defmodule Bff.UserController do
                 case HTTPoison.get("http://business-rules:8001/contentUser/#{user_id}/", header, []) do
 
                   {:ok, %HTTPoison.Response{body: body}} ->
-
                     hash_response = Poison.decode!(body)
 
                     content_user_hash = Enum.map(hash_response["contents"], fn v -> 
@@ -202,18 +201,16 @@ defmodule Bff.UserController do
                     content_user_hash = %{}
                 end
 
-                case HTTPoison.get("http://business-rules:8001/userVote/#{user_id}", header, []) do
+                case HTTPoison.get("http://business-rules:8001/userVote/#{user_id}/", header, []) do
                   {:ok, %HTTPoison.Response{body: user_vote_body}} ->
-
                     user_vote_hash_response = Poison.decode!(user_vote_body)
-
-                    user_vote_hash = Enum.map(user_vote_hash_response, fn v -> 
+                    user_vote_hash = Enum.map(user_vote_hash_response["records"], fn v -> 
                       {v["new_id"], v}
                     end) 
                     |> Map.new
 
                   {:error, _response} ->
-
+                    user_vote_hash = %{}
                 end
 
                 topics = Poison.decode!(body)
@@ -236,9 +233,8 @@ defmodule Bff.UserController do
                         end
                           )
 
-                    case HTTPoison.get("http://business-rules:8001/newVotes/#{k["id"]}", header, []) do
+                    case HTTPoison.get("http://business-rules:8001/newVotes/#{k["id"]}/", header, []) do
                       {:ok, %HTTPoison.Response{body: new_votes_body}} ->
-
                         new_votes_hash_response = Poison.decode!(new_votes_body)
 
                         up_votes = new_votes_hash_response["up_votes"]
@@ -254,7 +250,7 @@ defmodule Bff.UserController do
                     is_fav = if hash_of_own_sources[k["source_id"]], do: 1, else: 0
                     sort_topics_with_name = Enum.reverse(Enum.sort_by(topics_with_name,  fn(n) -> n["weight"] end))
                     saved = if content_user_hash[k["source_id"]], do: 1, else: 0
-                    voted = user_vote_hash[k["source_id"]]["vote"]
+                    voted = if user_vote_hash[k["source_id"]]["vote"], do: user_vote_hash[k["source_id"]]["vote"], else: 0
                     k
                     |> Map.put("topics", sort_topics_with_name)
                     |> Map.put("fav_source", is_fav)
@@ -271,7 +267,6 @@ defmodule Bff.UserController do
 
                 finished = Enum.reduce(news, array, fn(x, acc) -> acc ++ x end)
 
-                
                 conn
                 |> put_status(200)
                 |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(finished)})
