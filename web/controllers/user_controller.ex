@@ -184,6 +184,38 @@ defmodule Bff.UserController do
                   {v["id"], v["name"]} 
                 end)
                 |> Map.new
+
+
+
+                case HTTPoison.get("http://business-rules:8001/contentUser/#{user_id}/", header, []) do
+
+                  {:ok, %HTTPoison.Response{body: body}} ->
+
+                    hash_response = Poison.decode!(body)
+
+                    content_user_hash = Enum.map(hash_response["contents"], fn v -> 
+                      {v["content_id"], v}
+                    end) 
+                    |> Map.new
+
+                  {:error, _response} ->
+                    content_user_hash = %{}
+                end
+
+                case HTTPoison.get("http://business-rules:8001/userVote/#{user_id}", header, []) do
+                  {:ok, %HTTPoison.Response{body: user_vote_body}} ->
+
+                    user_vote_hash_response = Poison.decode!(user_vote_body)
+
+                    user_vote_hash = Enum.map(user_vote_hash_response, fn v -> 
+                      {v["new_id"], v}
+                    end) 
+                    |> Map.new
+
+                  {:error, _response} ->
+
+                end
+
                 topics = Poison.decode!(body)
                 news = Enum.map(topics, fn v ->
 
@@ -203,12 +235,33 @@ defmodule Bff.UserController do
                               } 
                         end
                           )
+
+                    case HTTPoison.get("http://business-rules:8001/newVotes/#{k["id"]}", header, []) do
+                      {:ok, %HTTPoison.Response{body: new_votes_body}} ->
+
+                        new_votes_hash_response = Poison.decode!(new_votes_body)
+
+                        up_votes = new_votes_hash_response["up_votes"]
+                        down_votes = new_votes_hash_response["down_votes"]
+                      {:error, _response} ->
+                        up_votes = 0
+                        down_votes = 0
+
+                    end
+
+
+
                     is_fav = if hash_of_own_sources[k["source_id"]], do: 1, else: 0
                     sort_topics_with_name = Enum.reverse(Enum.sort_by(topics_with_name,  fn(n) -> n["weight"] end))
+                    saved = if content_user_hash[k["source_id"]], do: 1, else: 0
+                    voted = user_vote_hash[k["source_id"]]["vote"]
                     k
                     |> Map.put("topics", sort_topics_with_name)
                     |> Map.put("fav_source", is_fav)
-
+                    |> Map.put("up_votes", up_votes)
+                    |> Map.put("down_votes", down_votes)
+                    |> Map.put("saved", saved)
+                    |> Map.put("vote", voted)
                   end
                   )
                   end
