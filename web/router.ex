@@ -49,7 +49,7 @@ defmodule Bff.Router do
     put "/update_user_vote", VoteController, :update_user_vote
     get "/get_user_votes", VoteController, :get_user_votes
     delete "/remove_user_source", VoteController, :remove_user_source
-    post "/create_user_source", VoteController, :create_user_source
+    put "/user_source", VoteController, :user_source
     get "/get_source_user", VoteController, :get_source_user
     post "/create_content_user", VoteController, :create_content_user
     delete "/remove_content_user", VoteController, :remove_content_user
