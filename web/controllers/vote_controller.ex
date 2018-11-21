@@ -515,10 +515,10 @@ defmodule Bff.VoteController do
 
         hash_response = Poison.decode!(body)
 
-
+        response = Enum.map(hash_response, fn v -> %{name: v["name"], id: v["id"]}end)
         conn
         |> put_status(200)
-        |> render(Bff.WormholeView, "tunnel.json", %{data: hash_response})
+        |> render(Bff.WormholeView, "tunnel.json", %{data: response})
       {:error, _response} ->
         conn
         |> put_status(500)
