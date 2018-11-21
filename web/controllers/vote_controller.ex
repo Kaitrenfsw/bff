@@ -239,8 +239,6 @@ defmodule Bff.VoteController do
   def saved_news(conn, _assign) do
     
 
-
-
     [authorization_header | _] = get_req_header(conn, "authorization")
     header = [
               {"Content-Type", "application/json"},
@@ -305,7 +303,7 @@ defmodule Bff.VoteController do
 
                 {:error, _response} ->
                   hash_of_topics = %{}
-                end
+              end
 
               hash_response = Poison.decode!(body)
               array = Enum.map(hash_response["contents"], fn v -> 
@@ -494,6 +492,33 @@ defmodule Bff.VoteController do
 
         end
 
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")
+    end
+
+  end
+
+
+  def get_idm_topics(conn, %{"user_id" => user_id}) do
+
+    [authorization_header | _] = get_req_header(conn, "authorization")
+    header = [
+              {"Content-Type", "application/json"},
+              {"authorization", authorization_header}
+             ]
+    case HTTPoison.get("http://business-rules:8001/topicUser/#{user_id}/", header, []) do
+
+      
+      {:ok, %HTTPoison.Response{body: body}} ->
+
+        hash_response = Poison.decode!(body)
+
+
+        conn
+        |> put_status(200)
+        |> render(Bff.WormholeView, "tunnel.json", %{data: hash_response})
       {:error, _response} ->
         conn
         |> put_status(500)
