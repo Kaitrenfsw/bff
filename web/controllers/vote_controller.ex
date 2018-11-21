@@ -211,12 +211,16 @@ defmodule Bff.VoteController do
     end
   end
 
-  def remove_content_user(conn, %{"id" => id}) do
+  def remove_content_user(conn, %{"user_id" => user_id, "content_id" => content_id}) do
     header = [
               {"Content-Type", "application/json"}
-             ]        
+             ]
 
-    case HTTPoison.delete("http://business-rules:8001/contentUser/#{id}/", header, []) do
+    body = %{user_id: user_id, content_id: content_id}
+
+    body_request = Poison.encode!(body)
+
+    case HTTPoison.put("http://business-rules:8001/contentUser/#{user_id}/", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
 
@@ -370,7 +374,6 @@ defmodule Bff.VoteController do
 
                 end
               end) 
-              IO.inspect array
               conn
               |> put_status(200)
               |> render(Bff.WormholeView, "tunnel.json", %{data: array})
