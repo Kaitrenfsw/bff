@@ -374,10 +374,9 @@ defmodule Bff.VoteController do
               {"authorization", authorization_header}
              ]
 
-    case HTTPoison.get("http://user:4000/api/owners/idms/", header, []) do
+    case HTTPoison.get("http://user:4000/api/owners/idms/?action=owner_action", header, []) do
       {:ok, %HTTPoison.Response{body: users_body}} ->
         users_hash_response = Poison.decode!(users_body)
-
         users_ids = Enum.map(users_hash_response["users"], fn v -> Integer.to_string(v["id"]) end)
 
         users_ids_to_request = Enum.join(users_ids, "-")
