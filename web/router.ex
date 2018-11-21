@@ -57,5 +57,6 @@ defmodule Bff.Router do
     get "/get_sources", VoteController, :get_sources
     get "/idms_sources", VoteController, :get_topic_stats
     get "/idms_topics", VoteController, :get_idm_topics
+    get "/idms_logs", OwnerController, :user_logs
   end
 end

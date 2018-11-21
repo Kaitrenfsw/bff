@@ -193,7 +193,30 @@ defmodule Bff.OwnerController do
         |> render(Bff.ErrorView, "500.json")
 
     end
-  end  
+  end
+
+  def user_logs(conn, %{"user_id" => user_id}) do
+
+    header = [
+              {"Content-Type", "application/json"}
+             ]
+
+    case HTTPoison.get("http://tracer:4000/api/all_logs/?user_id=#{user_id}", header, []) do
+
+      {:ok, %HTTPoison.Response{body: body}} ->
+        hash_response = Poison.decode!(body)
+
+        conn
+        |> put_status(200)
+        |> render(Bff.AdminView, "same.json", %{data: hash_response})
+      {:error, _response} ->
+        conn
+        |> put_status(500)
+        |> render(Bff.ErrorView, "500.json")    end
+
+
+  end
+
   
 
 

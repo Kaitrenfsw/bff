@@ -131,9 +131,35 @@ defmodule Bff.UserController do
     }
 
     body_request = Poison.encode!(body)
+    
     case HTTPoison.put("http://business-rules:8001/topicUser/#{id}/", body_request, header, []) do
       {:ok, %HTTPoison.Response{body: body}} ->
         hash_response = Poison.decode!(body)
+
+        body_tracer = Poison.encode!(%{suscribed: hash_response["subscribed_topics"]})
+
+        case HTTPoison.post("http://tracer:4000/api/multiple_suscribed_logs/", body_tracer, header, []) do
+
+          {:ok, %HTTPoison.Response{body: body}} ->
+            suscribe_log = true
+
+          {:error, _response} ->
+        
+            suscribe_log = false
+        end
+
+        body_tracer = Poison.encode!(%{unsuscribed: hash_response["unsubscribed_topics"]})
+        
+        case HTTPoison.post("http://tracer:4000/api/multiple_unsuscribed_logs/", body_tracer, header, []) do
+
+          {:ok, %HTTPoison.Response{body: body}} ->
+            suscribe_log = true
+
+          {:error, _response} ->
+        
+            suscribe_log = false
+        end
+
         conn
         |> put_status(200)
         |> render(Bff.WormholeView, "tunnel.json", %{data: hash_response})
