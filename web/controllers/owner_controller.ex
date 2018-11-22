@@ -204,11 +204,36 @@ defmodule Bff.OwnerController do
     case HTTPoison.get("http://tracer:4000/api/all_logs/?user_id=#{user_id}", header, []) do
 
       {:ok, %HTTPoison.Response{body: body}} ->
+
+        {:ok, %HTTPoison.Response{body: topics_body}} = HTTPoison.get("http://business-rules:8001/topic/", header, [])
+        hash_of_topics = Enum.map(Poison.decode!(topics_body), fn v -> 
+          {v["id"], v["name"]} 
+        end)
+        |> Map.new
+
+
         hash_response = Poison.decode!(body)
 
+        unsuscription = Enum.map(hash_response["unsubscriptions"], fn v ->
+          v
+          |> Map.put(:topic_name, hash_of_topics[v["topic_id"]])
+        end)
+
+        suscription = Enum.map(hash_response["subscriptions"], fn v ->
+          v
+          |> Map.put(:topic_name, hash_of_topics[v["topic_id"]])
+        end)
+
+        logins = Enum.map(hash_response["logins"], fn v ->
+          v
+          |> Map.put(:topic_name, hash_of_topics[v["topic_id"]])
+        end)        
+
+
+        response = %{unsubscriptions: unsuscription, subscriptions: suscription, logins: logins}
         conn
         |> put_status(200)
-        |> render(Bff.AdminView, "same.json", %{data: hash_response})
+        |> render(Bff.AdminView, "same.json", %{data: response})
       {:error, _response} ->
         conn
         |> put_status(500)

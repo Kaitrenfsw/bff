@@ -288,6 +288,7 @@ defmodule Bff.UserController do
                       _ -> 
                         voted = 0
                     end
+                    
                     k
                     |> Map.put("topics", sort_topics_with_name)
                     |> Map.put("fav_source", is_fav)
