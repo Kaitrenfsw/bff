@@ -223,7 +223,7 @@ defmodule Bff.AdminController do
                 nil ->
                   %{site: v["site"], name: v["name"], id: v["id"], favorite: 0, down_votes: v["down_votes"], up_votes: v["up_votes"]}
                 _ ->
-                  %{site: v["site"], name: v["name"], id: v["id"], favorite: 1}
+                  %{site: v["site"], name: v["name"], id: v["id"], favorite: 1, down_votes: v["down_votes"], up_votes: v["up_votes"]}
 
               end
 
