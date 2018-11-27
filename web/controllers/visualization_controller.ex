@@ -30,6 +30,8 @@ defmodule Bff.VisualizationController do
               {"Content-Type", "application/json"}
              ]
 
+    date = Date.to_string(Date.utc_today())
+    
     case HTTPoison.get("http://business-rules:8001/dateConversion/#{date}/", header, []) do
       {:ok, %HTTPoison.Response{body: dates_body}} ->
 
@@ -60,8 +62,10 @@ defmodule Bff.VisualizationController do
         case HTTPoison.get(query, header, []) do
           {:ok, %HTTPoison.Response{body: body}} ->
             hash_response = Poison.decode!(body)
+            buckets = Enum.slice( hash_response["buckets"], 1..23)
+
             value = first_date["week"] - 1
-            hash_with_buckets_and_dates = Enum.zip(sunday_array, hash_response["buckets"]) |> Enum.into(%{})
+            hash_with_buckets_and_dates = Enum.zip(sunday_array, buckets) |> Enum.into(%{})
             IO.inspect hash_with_buckets_and_dates
             response = %{weeks: Enum.map(hash_with_buckets_and_dates ,fn {k, v} -> 
 
@@ -90,6 +94,7 @@ defmodule Bff.VisualizationController do
     header = [
               {"Content-Type", "application/json"}
              ]
+    date = Date.to_string(Date.utc_today())
 
     topics_ids = String.split(topics_ids, ",")
     case HTTPoison.get("http://business-rules:8001/dateConversion/#{date}/", header, []) do
@@ -124,8 +129,9 @@ defmodule Bff.VisualizationController do
           case HTTPoison.get(query, header, []) do
             {:ok, %HTTPoison.Response{body: body}} ->
               hash_response = Poison.decode!(body)
+              buckets = Enum.slice( hash_response["buckets"], 1..23)
               value = first_date["week"] - 1
-              hash_with_buckets_and_dates = Enum.zip(sunday_array, hash_response["buckets"]) |> Enum.into(%{})
+              hash_with_buckets_and_dates = Enum.zip(sunday_array, buckets) |> Enum.into(%{})
               response = %{topic_id: topic_id, weeks: Enum.map(hash_with_buckets_and_dates ,fn {k, v} -> 
 
                 %{week: k, count: v["data"]["document_count"]} 
@@ -159,7 +165,22 @@ defmodule Bff.VisualizationController do
               {"Content-Type", "application/json"}
              ]
 
-    date = "2015-09-28"
+    date = Date.to_string(Date.utc_today())
+
+
+    case HTTPoison.get("http://business-rules:8001/dateToWeek/#{date}/", header, []) do
+
+      {:ok, %HTTPoison.Response{body: date_body}} ->
+        IO.inspect "date_body"
+        IO.inspect date_body
+        date_hash_response = Poison.decode!(date_body)
+
+        int_week = date_hash_response["week"]
+
+      {:error, _response} ->
+        int_week = 466
+    end
+
     topics_ids = String.split(topics_ids, ",")
 
     case HTTPoison.get("http://business-rules:8001/dateConversion/#{date}/", header, []) do
@@ -180,7 +201,7 @@ defmodule Bff.VisualizationController do
 
           filters = Poison.encode! filters
 
-          grouping = [%{type: "range", key: "int_published",  opts: %{ step: 1, min: first_date["week"], max: (first_date["week"] + 4) } }]
+          grouping = [%{type: "range", key: "int_published",  opts: %{ step: 1, min: (int_week - 4), max: (int_week) } }]
           grouping = Poison.encode! grouping
 
           query = "http://categorized_data:4000/api/documents/?page_size=30&filters=" <> filters <> "&grouping=" <> grouping

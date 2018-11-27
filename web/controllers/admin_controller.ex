@@ -216,7 +216,11 @@ defmodule Bff.AdminController do
           {:ok, %HTTPoison.Response{body: body}} ->
 
             hash_response = Poison.decode!(body)
-
+            IO.inspect hash_response
+            IO.inspect "hola"
+            IO.inspect "hola"
+            IO.inspect "hola"
+            IO.inspect "hola"
             hash_with_favorite = Enum.map(hash_response, fn v -> 
               case hash_of_own_sources[v["id"]] do
                 

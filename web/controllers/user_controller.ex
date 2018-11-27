@@ -229,8 +229,6 @@ defmodule Bff.UserController do
 
                 case HTTPoison.get("http://business-rules:8001/userVote/#{user_id}/", header, []) do
                   {:ok, %HTTPoison.Response{body: user_vote_body}} ->
-                    IO.inspect user_vote_body
-                    IO.inspect "weas"
                     user_vote_hash_response = Poison.decode!(user_vote_body)
                     user_vote_hash = Enum.map(user_vote_hash_response["records"], fn v -> 
                       {v["new_id"], v}
@@ -245,7 +243,22 @@ defmodule Bff.UserController do
                 topics = Poison.decode!(body)
                 news = Enum.map(topics, fn v ->
 
-                  filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: v["id"]}]} ]
+                  date_now = Date.to_string(Date.utc_today())
+
+                  case HTTPoison.get("http://business-rules:8001/dateToWeek/#{date_now}/", header, []) do
+
+                    {:ok, %HTTPoison.Response{body: date_body}} ->
+                      IO.inspect "date_body"
+                      IO.inspect date_body
+                      date_hash_response = Poison.decode!(date_body)
+
+                      int_week = date_hash_response["week"]
+
+                    {:error, _response} ->
+                      int_week = 466
+                  end
+
+                  filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: v["id"]}]}, %{type: "match", field: "int_published", value: int_week} ]
                   filters = Poison.encode! filters
 
                   query = "categorized_data:4000/api/documents/?page_size=30&filters=" <> filters
@@ -288,7 +301,7 @@ defmodule Bff.UserController do
                       _ -> 
                         voted = 0
                     end
-                    
+
                     k
                     |> Map.put("topics", sort_topics_with_name)
                     |> Map.put("fav_source", is_fav)
@@ -304,7 +317,8 @@ defmodule Bff.UserController do
                 array = []
 
                 finished = Enum.reduce(news, array, fn(x, acc) -> acc ++ x end)
-
+                IO.inspect Enum.uniq(finished)
+                IO.inspect "alog"
                 conn
                 |> put_status(200)
                 |> render(Bff.WormholeView, "tunnel.json", %{data: Enum.uniq(finished)})

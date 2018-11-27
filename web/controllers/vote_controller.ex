@@ -72,7 +72,7 @@ defmodule Bff.VoteController do
               {"Content-Type", "application/json"}
              ]
 
-    body = %{new_id: new_id, source_id: 17, vote: vote}
+    body = %{new_id: new_id, source_id: source_id, vote: vote}
     body_request = Poison.encode!(body)
 
     case HTTPoison.put("http://business-rules:8001/userVote/#{user_id}/", body_request, header, []) do
