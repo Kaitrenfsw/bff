@@ -360,11 +360,24 @@ defmodule Bff.UserController do
               {"Content-Type", "application/json"},
               {"authorization", authorization_header}
              ]
+    date_now = Date.to_string(Date.utc_today())
+
+    case HTTPoison.get("http://business-rules:8001/dateToWeek/#{date_now}/", header, []) do
+
+      {:ok, %HTTPoison.Response{body: date_body}} ->
+        IO.inspect "date_body"
+        IO.inspect date_body
+        date_hash_response = Poison.decode!(date_body)
+
+        int_week = date_hash_response["week"]
+
+      {:error, _response} ->
+        int_week = 466
+    end
 
 
 
-
-    filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: topic_id}]} ]
+    filters = [ %{type: "nested", path: "topics", queries: [%{type: "match", field: "id", value: topic_id}]}, %{type: "match", field: "int_published", value: int_week} ]
     filters = Poison.encode! filters
 
     query = "categorized_data:4000/api/documents/?page_size=10&filters=" <> filters
